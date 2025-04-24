@@ -19,15 +19,4 @@ function shouldProcessMessage(id) {
   // After processing completes, move to processed set
   setTimeout(() => {
     processingMessages.delete(id);
-    processedMessages.add(id);
-    
-    // Clean up older processed messages later
-    setTimeout(() => {
-      processedMessages.delete(id);
-    }, 30000); // Keep in processed set for 30 seconds
-  }, 100);
-  
-  return true;
-}
-
-module.exports = { shouldProcessMessage };
+    processedMess
