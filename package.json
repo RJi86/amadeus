@@ -7,8 +7,10 @@
     "start": "node src/index.js"
   },
   "dependencies": {
+    "@discordjs/voice": "^0.18.0",
     "discord.js": "^14.18.0",
-    "dotenv": "^10.0.0"
+    "dotenv": "^10.0.0",
+    "openai": "^4.96.0"
   },
   "author": "Future Gadget Laboratory Members",
   "license": "ISC"

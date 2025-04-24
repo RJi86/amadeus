@@ -1,13 +1,19 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
 const http = require('http');
+const { getKurisuResponse } = require('./utils/kurisuAI');
 
 // Debug logs
 console.log('Starting bot...');
 console.log('Token loaded:', process.env.TOKEN ? 'Yes' : 'No');
+console.log('Groq API Key loaded:', process.env.GROQ_API_KEY ? 'Yes' : 'No');
 
 const client = new Client({ 
-  intents: [GatewayIntentBits.Guilds] 
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ] 
 });
 
 // Debug activity
@@ -17,51 +23,27 @@ console.log('Client created');
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   console.log('Amadeus System is now online.');
-  // Remove this line: process.exit(0);
+  client.user.setActivity('with the PhoneWave');
 });
 
-// Simple message handler
-client.on('messageCreate', message => {
+// Message handler with AI integration
+client.on('messageCreate', async message => {
   if (message.author.bot) return;
   
+  // Command handling
   if (message.content === '!ping') {
     message.channel.send('Pong!');
   }
   
   if (message.content === '!help') {
-    message.channel.send('Available commands:\n!ping - Responds with Pong!\n!help - Shows this message');
+    message.channel.send('Available commands:\n!ping - Tests response time\n!help - Shows this message\n\nYou can also mention me or start your message with "Kurisu" to chat with me.');
   }
-});
-
-// Set a timeout to detect stalling
-setTimeout(() => {
-  console.log('Still waiting for connection after 10 seconds...');
-}, 10000);
-
-// Login with error handling
-console.log('Attempting to log in...');
-client.login(process.env.TOKEN)
-  .then(() => console.log('Login promise resolved'))
-  .catch(err => {
-    console.error('Login failed with error:', err);
-    process.exit(1);
-  });
-
-client.on('error', (error) => {
-  console.error('Discord client error:', error);
-});
-
-// Log any unhandled rejections
-process.on('unhandledRejection', (error) => {
-  console.error('Unhandled promise rejection:', error);
-});
-
-const PORT = process.env.PORT || 3000;
-const server = http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end('Amadeus System Discord bot is running!');
-});
-
-server.listen(PORT, () => {
-  console.log(`HTTP Server running on port ${PORT}`);
-});
+  
+  // AI chat functionality - triggered by mention or starting with "Kurisu"
+  if (message.mentions.has(client.user) || message.content.toLowerCase().startsWith('kurisu')) {
+    // Extract the actual message without the mention or "Kurisu" prefix
+    let userMessage = message.content;
+    if (message.mentions.has(client.user)) {
+      userMessage = userMessage.replace(/<@!?\d+>/, '').trim();
+    } else if (message.content.toLowerCase().startsWith('kurisu')) {
+      userMessage = userMessage.substring(6).trim();
