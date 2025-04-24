@@ -1,5 +1,16 @@
 const { addMessage, getConversation } = require('./conversationMemory');
 
+const errorResponses = [
+  "My neural pathways seem scrambled. Could you repeat that?",
+  "I-it's not like I don't understand you... I'm just busy with research.",
+  "The connection appears unstable. Must be SERN interference.",
+  "I'm having difficulty processing that. Try rephrasing your question."
+];
+
+function getRandomErrorResponse() {
+  return errorResponses[Math.floor(Math.random() * errorResponses.length)];
+}
+
 async function getKurisuResponse(message, username, messageId = null) {
   try {
     // Get existing conversation
@@ -43,11 +54,13 @@ async function getKurisuResponse(message, username, messageId = null) {
       })
     });
 
+    console.log('Groq API status:', response.status);
     const data = await response.json();
+    console.log('Groq API response data:', JSON.stringify(data).substring(0, 100) + '...');
     
     if (data.error) {
       console.error('Groq API error:', data.error);
-      return "I seem to be experiencing a temporal anomaly. Try again later.";
+      return getRandomErrorResponse();
     }
     
     // Check if there's a valid response
@@ -56,22 +69,7 @@ async function getKurisuResponse(message, username, messageId = null) {
                          data.choices[0].message && 
                          data.choices[0].message.content
                          ? data.choices[0].message.content
-                         : "My neural pathways seem scrambled. Could you repeat that?";
+                         : getRandomErrorResponse();
     
     // Make sure response is not empty
-    if (!responseText || responseText.trim() === '') {
-      console.error('Empty response received from API');
-      return "My neural pathways seem scrambled. Could you repeat that?";
-    }
-    
-    // Add the AI's response to the conversation history
-    addMessage("Kurisu", "assistant", responseText);
-    
-    return responseText;
-  } catch (error) {
-    console.error('Error getting AI response:', error);
-    return "There seems to be an error in the system. How illogical...";
-  }
-}
-
-module.exports = { getKurisuResponse };
+    if (!responseText || responseText.tr

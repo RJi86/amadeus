@@ -44,6 +44,33 @@ client.on('messageCreate', async message => {
     clearConversation();
     message.channel.send("D-Mail sent to the past. The timeline has been altered. El Psy Kongroo.");
   }
+
+  if (message.content === '!test') {
+    message.channel.send("Testing Groq API connection...");
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          messages: [
+            { role: "system", content: "You are Kurisu. Respond with 'El Psy Kongroo.'" },
+            { role: "user", content: "Test message" }
+          ],
+          max_tokens: 10,
+          temperature: 0.7
+        })
+      });
+      
+      const data = await response.json();
+      message.channel.send(`API Test Result: ${JSON.stringify(data, null, 2).substring(0, 1000)}`);
+    } catch (error) {
+      message.channel.send(`API Test Error: ${error.message}`);
+    }
+  }
   
   // AI chat functionality - triggered by mention or starting with "Kurisu"
   if (message.mentions.has(client.user) || message.content.toLowerCase().startsWith('kurisu')) {
