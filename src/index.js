@@ -47,3 +47,44 @@ client.on('messageCreate', async message => {
       userMessage = userMessage.replace(/<@!?\d+>/, '').trim();
     } else if (message.content.toLowerCase().startsWith('kurisu')) {
       userMessage = userMessage.substring(6).trim();
+    }
+    
+    // Send typing indicator
+    message.channel.sendTyping();
+    
+    // Show thinking message for immersion
+    const thinkingMessage = await message.channel.send("*Thinking...*");
+    
+    try {
+      // Get AI response
+      const response = await getKurisuResponse(userMessage);
+      
+      // Delete thinking message and send response
+      await thinkingMessage.delete();
+      message.channel.send(response);
+    } catch (error) {
+      console.error('Error in AI response:', error);
+      await thinkingMessage.delete();
+      message.channel.send("I apologize, but there seems to be an error in my neural network. How troublesome...");
+    }
+  }
+});
+
+// Login with error handling
+client.login(process.env.TOKEN)
+  .then(() => console.log('Login successful'))
+  .catch(err => {
+    console.error('Login failed with error:', err);
+    process.exit(1);
+  });
+
+// HTTP server for hosting
+const PORT = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Amadeus System is running! El Psy Kongroo.');
+});
+
+server.listen(PORT, () => {
+  console.log(`HTTP Server running on port ${PORT}`);
+});
