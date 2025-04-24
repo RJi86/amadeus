@@ -1,6 +1,6 @@
 // Global conversation memory system
 const globalConversation = [];
-const MAX_HISTORY_LENGTH = 10; // Reduced from 20 to 10 as requested
+const MAX_HISTORY_LENGTH = 20; // Reduced from 20 to 10 as requested
 const messageMap = new Map(); // Tracks which user message goes with which response
 
 function addMessage(username, role, content, messageId = null) {

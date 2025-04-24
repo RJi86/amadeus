@@ -94,8 +94,4 @@ async function getKurisuResponse(message, username, messageId = null) {
     return responseText;
   } catch (error) {
     console.error(`Error in getKurisuResponse for ${messageId}:`, error);
-    return getRandomErrorResponse();
-  }
-}
-
-module.exports = { getKurisuResponse };
+    return get
