@@ -38,6 +38,12 @@ client.on('messageCreate', async message => {
   if (message.content === '!help') {
     message.channel.send('Available commands:\n!ping - Tests response time\n!help - Shows this message\n\nYou can also mention me or start your message with "Kurisu" to chat with me.');
   }
+
+  if (message.content === '!dmail') {
+    const { clearConversation } = require('./utils/conversationMemory');
+    clearConversation();
+    message.channel.send("D-Mail sent to the past. The timeline has been altered. El Psy Kongroo.");
+  }
   
   // AI chat functionality - triggered by mention or starting with "Kurisu"
   if (message.mentions.has(client.user) || message.content.toLowerCase().startsWith('kurisu')) {
@@ -56,8 +62,8 @@ client.on('messageCreate', async message => {
     const thinkingMessage = await message.channel.send("*Thinking...*");
     
     try {
-      // Get AI response
-      const response = await getKurisuResponse(userMessage);
+      // Get AI response - pass username for context
+      const response = await getKurisuResponse(userMessage, message.author.username);
       
       // Delete thinking message and send response
       await thinkingMessage.delete();
