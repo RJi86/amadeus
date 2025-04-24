@@ -1,5 +1,6 @@
 const { addMessage, getConversation } = require('./conversationMemory');
 
+// Error response options for variety
 const errorResponses = [
   "My neural pathways seem scrambled. Could you repeat that?",
   "I-it's not like I don't understand you... I'm just busy with research.",
@@ -16,7 +17,7 @@ async function getKurisuResponse(message, username, messageId = null) {
     // Get existing conversation
     const conversation = getConversation();
     
-    // Add the user's message to global history with message ID
+    // Add the user's message to global history
     addMessage(username, "user", message, messageId);
     
     // Prepare messages array for API
@@ -40,6 +41,7 @@ async function getKurisuResponse(message, username, messageId = null) {
     // Build the complete messages array with history
     const messages = [systemMessage, ...conversation];
     
+    console.log('Sending request to Groq API...');
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -72,4 +74,19 @@ async function getKurisuResponse(message, username, messageId = null) {
                          : getRandomErrorResponse();
     
     // Make sure response is not empty
-    if (!responseText || responseText.tr
+    if (!responseText || responseText.trim() === '') {
+      console.error('Empty response received from API');
+      return getRandomErrorResponse();
+    }
+    
+    // Add the AI's response to the conversation history
+    addMessage("Kurisu", "assistant", responseText);
+    
+    return responseText;
+  } catch (error) {
+    console.error('Error getting AI response:', error);
+    return getRandomErrorResponse();
+  }
+}
+
+module.exports = { getKurisuResponse };
