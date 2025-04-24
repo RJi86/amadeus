@@ -1,0 +1,15 @@
+{
+  "name": "armadeus-system",
+  "version": "1.0.0",
+  "description": "yet to be determined",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^10.0.0"
+  },
+  "author": "Future Gadget Laboratory Members",
+  "license": "ISC"
+}
