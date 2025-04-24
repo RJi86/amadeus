@@ -79,8 +79,12 @@ client.on('messageCreate', async message => {
   
   // AI chat functionality - only execute if none of the above commands matched
   if (message.mentions.has(client.user) || message.content.toLowerCase().startsWith('kurisu')) {
-    // Process as before...
+    // Extract message content
     let userMessage = message.content;
+    
+    // Log every incoming message for debugging
+    console.log(`[${message.id}] Message from ${message.author.username}: "${userMessage}"`);
+    
     if (message.mentions.has(client.user)) {
       userMessage = userMessage.replace(/<@!?\d+>/, '').trim();
     } else if (message.content.toLowerCase().startsWith('kurisu')) {
@@ -91,13 +95,20 @@ client.on('messageCreate', async message => {
     const thinkingMessage = await message.channel.send("*Thinking...*");
     
     try {
+      // Include both message ID and a timestamp to ensure proper ordering
+      const timestamp = new Date().getTime();
+      console.log(`[${message.id}] Processing at ${timestamp}`);
+      
       const response = await getKurisuResponse(userMessage, message.author.username, message.id);
-      const safeResponse = response && response.trim() ? response : "My neural pathways seem scrambled. Could you repeat that?";
-      await thinkingMessage.delete();
+      const safeResponse = response && response.trim() 
+        ? response 
+        : "I'm having difficulty processing that. Try rephrasing your question.";
+      
+      await thinkingMessage.delete().catch(err => console.error('Could not delete thinking message:', err));
       return message.channel.send(safeResponse);
     } catch (error) {
-      console.error('Error in AI response:', error);
-      await thinkingMessage.delete();
+      console.error(`[${message.id}] Error in AI response:`, error);
+      await thinkingMessage.delete().catch(err => {});
       return message.channel.send("I apologize, but there seems to be an error in my neural network. How troublesome...");
     }
   }
