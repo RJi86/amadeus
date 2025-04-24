@@ -3,6 +3,10 @@ require('dotenv').config();
 const http = require('http');
 const { getKurisuResponse } = require('./utils/kurisuAI');
 
+// Track recently processed messages to prevent duplicates
+const processedMessages = new Set();
+const MESSAGE_TIMEOUT = 5000; // 5 seconds
+
 // Debug logs
 console.log('Starting bot...');
 console.log('Token loaded:', process.env.TOKEN ? 'Yes' : 'No');
@@ -29,6 +33,19 @@ client.once('ready', () => {
 // Message handler with AI integration
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
+  
+  // Prevent duplicate message processing
+  if (processedMessages.has(message.id)) {
+    return;
+  }
+  
+  // Mark this message as processed
+  processedMessages.add(message.id);
+  
+  // Remove from processed set after timeout
+  setTimeout(() => {
+    processedMessages.delete(message.id);
+  }, MESSAGE_TIMEOUT);
   
   // Command handling
   if (message.content === '!ping') {
