@@ -85,4 +85,26 @@ async function getKurisuResponse(message, username, messageId = null) {
     
     // Check if there's a valid response
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error(`Invalid API structu
+      console.error(`Invalid API structure: ${responsePreview}`);
+      return getRandomErrorResponse();
+    }
+    
+    // Check specifically for empty content
+    const responseContent = data.choices[0].message.content;
+    if (!responseContent || responseContent.trim() === '') {
+      console.error('Empty response content from API');
+      return getRandomErrorResponse();
+    }
+    
+    // Success! Add the response to conversation history
+    const responseText = responseContent.trim();
+    addMessage("Kurisu", "assistant", responseText);
+    
+    return responseText;
+  } catch (error) {
+    console.error(`Error in getKurisuResponse for ${messageId}:`, error);
+    return getRandomErrorResponse();
+  }
+}
+
+module.exports = { getKurisuResponse };
