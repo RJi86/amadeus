@@ -62,8 +62,8 @@ client.on('messageCreate', async message => {
     const thinkingMessage = await message.channel.send("*Thinking...*");
     
     try {
-      // Get AI response - pass username for context
-      const response = await getKurisuResponse(userMessage, message.author.username);
+      // Get AI response - pass username for context and message ID
+      const response = await getKurisuResponse(userMessage, message.author.username, message.id);
       
       // Make sure we never send an empty message
       const safeResponse = response && response.trim() 

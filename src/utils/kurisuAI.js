@@ -1,12 +1,12 @@
 const { addMessage, getConversation } = require('./conversationMemory');
 
-async function getKurisuResponse(message, username) {
+async function getKurisuResponse(message, username, messageId = null) {
   try {
     // Get existing conversation
     const conversation = getConversation();
     
-    // Add the user's message to global history
-    addMessage(username, "user", message);
+    // Add the user's message to global history with message ID
+    addMessage(username, "user", message, messageId);
     
     // Prepare messages array for API
     const systemMessage = {

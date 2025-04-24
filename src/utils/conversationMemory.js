@@ -1,14 +1,18 @@
 // Global conversation memory system
 const globalConversation = [];
 const MAX_HISTORY_LENGTH = 20; // Store last 20 messages
+const messageMap = new Map(); // Tracks which user message goes with which response
 
-function addMessage(username, role, content) {
+function addMessage(username, role, content, messageId = null) {
   // Format message with username for context
   let formattedContent = content;
   
-  // If it's a user message, prefix with username
+  // If it's a user message, prefix with username and store the message ID
   if (role === "user") {
     formattedContent = `[${username}]: ${content}`;
+    if (messageId) {
+      messageMap.set(messageId, globalConversation.length); // Track position in conversation
+    }
   }
   
   globalConversation.push({ role, content: formattedContent });
@@ -31,4 +35,4 @@ function clearConversation() {
   console.log("D-Mail sent to the past. Conversation history altered.");
 }
 
-module.exports = { addMessage, getConversation, clearConversation };
+module.exports = { addMessage, getConversation, clearConversation, messageMap };
