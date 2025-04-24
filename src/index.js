@@ -2,10 +2,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
 const http = require('http');
 const { getKurisuResponse } = require('./utils/kurisuAI');
-
-// Track recently processed messages to prevent duplicates
-const processedMessages = new Set();
-const MESSAGE_TIMEOUT = 5000; // 5 seconds
+const { shouldProcessMessage } = require('./utils/messageRateLimiter');
 
 // Debug logs
 console.log('Starting bot...');
@@ -32,34 +29,25 @@ client.once('ready', () => {
 
 // Message handler with AI integration
 client.on('messageCreate', async message => {
+  // Ignore bot messages
   if (message.author.bot) return;
   
-  // Prevent duplicate message processing
-  if (processedMessages.has(message.id)) {
-    return;
-  }
-  
-  // Mark this message as processed
-  processedMessages.add(message.id);
-  
-  // Remove from processed set after timeout
-  setTimeout(() => {
-    processedMessages.delete(message.id);
-  }, MESSAGE_TIMEOUT);
+  // Use our improved message debouncer
+  if (!shouldProcessMessage(message.id)) return;
   
   // Command handling
   if (message.content === '!ping') {
-    message.channel.send('Pong!');
+    return message.channel.send('Pong!');
   }
   
   if (message.content === '!help') {
-    message.channel.send('Available commands:\n!ping - Tests response time\n!help - Shows this message\n\nYou can also mention me or start your message with "Kurisu" to chat with me.');
+    return message.channel.send('Available commands:\n!ping - Tests response time\n!help - Shows this message\n\nYou can also mention me or start your message with "Kurisu" to chat with me.');
   }
 
   if (message.content === '!dmail') {
     const { clearConversation } = require('./utils/conversationMemory');
     clearConversation();
-    message.channel.send("D-Mail sent to the past. The timeline has been altered. El Psy Kongroo.");
+    return message.channel.send("D-Mail sent to the past. The timeline has been altered. El Psy Kongroo.");
   }
 
   if (message.content === '!test') {
@@ -89,9 +77,9 @@ client.on('messageCreate', async message => {
     }
   }
   
-  // AI chat functionality - triggered by mention or starting with "Kurisu"
+  // AI chat functionality - only execute if none of the above commands matched
   if (message.mentions.has(client.user) || message.content.toLowerCase().startsWith('kurisu')) {
-    // Extract the actual message without the mention or "Kurisu" prefix
+    // Process as before...
     let userMessage = message.content;
     if (message.mentions.has(client.user)) {
       userMessage = userMessage.replace(/<@!?\d+>/, '').trim();
@@ -99,28 +87,18 @@ client.on('messageCreate', async message => {
       userMessage = userMessage.substring(6).trim();
     }
     
-    // Send typing indicator
     message.channel.sendTyping();
-    
-    // Show thinking message for immersion
     const thinkingMessage = await message.channel.send("*Thinking...*");
     
     try {
-      // Get AI response - pass username for context and message ID
       const response = await getKurisuResponse(userMessage, message.author.username, message.id);
-      
-      // Make sure we never send an empty message
-      const safeResponse = response && response.trim() 
-        ? response 
-        : "My neural pathways seem scrambled. Could you repeat that?";
-      
-      // Delete thinking message and send response
+      const safeResponse = response && response.trim() ? response : "My neural pathways seem scrambled. Could you repeat that?";
       await thinkingMessage.delete();
-      message.channel.send(safeResponse);
+      return message.channel.send(safeResponse);
     } catch (error) {
       console.error('Error in AI response:', error);
       await thinkingMessage.delete();
-      message.channel.send("I apologize, but there seems to be an error in my neural network. How troublesome...");
+      return message.channel.send("I apologize, but there seems to be an error in my neural network. How troublesome...");
     }
   }
 });
