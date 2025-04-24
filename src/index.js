@@ -65,9 +65,14 @@ client.on('messageCreate', async message => {
       // Get AI response - pass username for context
       const response = await getKurisuResponse(userMessage, message.author.username);
       
+      // Make sure we never send an empty message
+      const safeResponse = response && response.trim() 
+        ? response 
+        : "My neural pathways seem scrambled. Could you repeat that?";
+      
       // Delete thinking message and send response
       await thinkingMessage.delete();
-      message.channel.send(response);
+      message.channel.send(safeResponse);
     } catch (error) {
       console.error('Error in AI response:', error);
       await thinkingMessage.delete();

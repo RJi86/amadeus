@@ -50,7 +50,19 @@ async function getKurisuResponse(message, username) {
       return "I seem to be experiencing a temporal anomaly. Try again later.";
     }
     
-    const responseText = data.choices[0].message.content;
+    // Check if there's a valid response
+    const responseText = data.choices && 
+                         data.choices[0] && 
+                         data.choices[0].message && 
+                         data.choices[0].message.content
+                         ? data.choices[0].message.content
+                         : "My neural pathways seem scrambled. Could you repeat that?";
+    
+    // Make sure response is not empty
+    if (!responseText || responseText.trim() === '') {
+      console.error('Empty response received from API');
+      return "My neural pathways seem scrambled. Could you repeat that?";
+    }
     
     // Add the AI's response to the conversation history
     addMessage("Kurisu", "assistant", responseText);
