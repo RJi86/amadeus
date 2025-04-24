@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
+const http = require('http');
 
 // Debug logs
 console.log('Starting bot...');
@@ -53,4 +54,14 @@ client.on('error', (error) => {
 // Log any unhandled rejections
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled promise rejection:', error);
+});
+
+const PORT = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Amadeus System Discord bot is running!');
+});
+
+server.listen(PORT, () => {
+  console.log(`HTTP Server running on port ${PORT}`);
 });
