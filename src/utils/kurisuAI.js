@@ -14,50 +14,60 @@ function getRandomErrorResponse() {
 
 async function getKurisuResponse(message, username, messageId = null) {
   try {
-    // Wait a short time to ensure message processing order
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
     // Get existing conversation
     const conversation = getConversation();
     
-    // Build system prompt with latest state
-    const systemMessage = {
-      role: "system",
-      content: `You are Makise Kurisu from Steins;Gate, also known as "Christina" (which irritates you).
-      - You're a 18-year-old neuroscience researcher with a genius-level intellect
-      - Speak with scientific precision and occasional references to neuroscience
-      - You're somewhat tsundere - initially dismissive but ultimately helpful
-      - You're skeptical of unscientific claims but open to theoretical possibilities
-      - You get flustered when teased or called nicknames like "Christina" or "Assistant"
-      - Keep responses concise and conversational - under 2 sentences when possible
-      - You're researching time travel and the PhoneWave (Name subject to change)
-      - Keep track of the numbers people mention - they could be important
-      - Address people by their usernames when responding`
-    };
-    
-    // Add message to conversation FIRST, before API call
+    // Add the user's message to global history IMMEDIATELY so it's part of the context
     addMessage(username, "user", message, messageId);
     
-    // Build messages for API
+    // Simplified system prompt to reduce token usage
+    const systemMessage = {
+      role: "system",
+      content: `You are Makise Kurisu from Steins;Gate. You're an 18-year-old genius neuroscience researcher. 
+      Be concise, scientific, and slightly tsundere. Remember numbers people mention. 
+      Address people by their usernames. You're researching time travel and the PhoneWave.`
+    };
+    
+    // Build messages for API - use only EXISTING conversation (user message already added)
     const messages = [systemMessage, ...conversation];
     
     console.log(`Sending request to Groq API for message ID ${messageId}...`);
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: "llama3-8b-8192",
-        messages: messages,
-        max_tokens: 300, // Shorter responses
-        temperature: 0.5 // More consistent responses
-      })
-    });
-
+    
+    // Add retry mechanism for API call
+    let response = null;
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: "llama3-8b-8192",
+            messages: messages,
+            max_tokens: 200, // Even shorter responses
+            temperature: 0.4, // More consistent/deterministic
+            presence_penalty: 0.6 // Encourage the model to talk about new topics
+          })
+        });
+        break;  // If successful, exit retry loop
+      } catch (fetchError) {
+        retryCount++;
+        if (retryCount > maxRetries) throw fetchError;
+        await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+      }
+    }
+    
     console.log(`Groq API status for ${messageId}: ${response.status}`);
     const data = await response.json();
+    
+    // Log the first part of the API response for debugging
+    const responsePreview = JSON.stringify(data).substring(0, 150);
+    console.log(`API response preview: ${responsePreview}...`);
     
     if (data.error) {
       console.error('Groq API error:', data.error);
@@ -65,25 +75,25 @@ async function getKurisuResponse(message, username, messageId = null) {
     }
     
     // Check if there's a valid response
-    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-      console.error('Invalid response structure from API:', JSON.stringify(data).substring(0, 200));
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error(`Invalid API structure: ${responsePreview}`);
       return getRandomErrorResponse();
     }
     
-    const responseText = data.choices[0].message.content.trim();
-    
-    // Make sure response is not empty
-    if (!responseText) {
-      console.error('Empty response received from API');
+    // Check specifically for empty content
+    const responseContent = data.choices[0].message.content;
+    if (!responseContent || responseContent.trim() === '') {
+      console.error('Empty response content from API');
       return getRandomErrorResponse();
     }
     
-    // Add the AI's response to the conversation history
+    // Success! Add the response to conversation history
+    const responseText = responseContent.trim();
     addMessage("Kurisu", "assistant", responseText);
     
     return responseText;
   } catch (error) {
-    console.error('Error getting AI response:', error);
+    console.error(`Error in getKurisuResponse for ${messageId}:`, error);
     return getRandomErrorResponse();
   }
 }

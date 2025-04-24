@@ -1,6 +1,6 @@
 // Global conversation memory system
 const globalConversation = [];
-const MAX_HISTORY_LENGTH = 20; // Store last 20 messages
+const MAX_HISTORY_LENGTH = 10; // Reduced from 20 to 10 as requested
 const messageMap = new Map(); // Tracks which user message goes with which response
 
 function addMessage(username, role, content, messageId = null) {
@@ -22,14 +22,14 @@ function addMessage(username, role, content, messageId = null) {
     globalConversation.shift(); // Remove oldest message
   }
   
-  return [...globalConversation]; // Return copy of conversation
+  return [...globalConversation];
 }
 
 function getConversation() {
   return [...globalConversation]; // Return copy to prevent modification
 }
 
-// Clear entire conversation history (D-Mail functionality)
+// Clear entire conversation history
 function clearConversation() {
   globalConversation.length = 0;
   console.log("D-Mail sent to the past. Conversation history altered.");
